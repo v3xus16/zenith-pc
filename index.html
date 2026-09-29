@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zenith PC — Кастомные ПК</title>
+    <!-- Подключение Google Identity Services API -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <style>
+        :root {
+            --bg-color: #0d0d0d;
+            --card-bg: #171717;
+            --border-color: #2a2a2a;
+            --text-main: #ffffff;
+            --text-muted: #888888;
+            --accent: #ffffff;
+            --accent-hover: #cccccc;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.5;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 40px;
+            border-bottom: 1px solid var(--border-color);
+            background-color: rgba(13, 13, 13, 0.9);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 20px;
+            font-weight: 800;
+            letter-spacing: 2px;
+            text-decoration: none;
+            color: var(--text-main);
+        }
+
+        .logo-icon {
+            width: 36px;
+            height: 36px;
+            background: #ffffff;
+            color: #000000;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+            font-size: 18px;
+        }
+
+        .user-nav {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .btn {
+            background: var(--accent);
+            color: #000;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .btn:hover {
+            opacity: 0.9;
+        }
+
+        .btn-outline {
+            background: transparent;
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-outline:hover {
+            background: #222;
+        }
+
+        .user-profile-btn {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            padding: 6px 12px;
+            border-radius: 30px;
+            cursor: pointer;
+        }
+
+        .user-avatar {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            object-fit: cover;
+            background: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            width: 100%;
+            flex: 1;
+        }
+
+        .hero {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        .hero h1 {
+            font-size: 48px;
+            font-weight: 900;
+            margin-bottom: 16px;
+            letter-spacing: -1px;
+        }
+
+        .hero p {
+            color: var(--text-muted);
+            font-size: 18px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 30px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            border-color: #555;
+        }
+
+        .card-title {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+
+        .card-price {
+            font-size: 28px;
+            font-weight: 800;
+            margin-bottom: 20px;
+        }
+
+        .specs-list {
+            list-style: none;
+            margin-bottom: 24px;
+        }
+
+        .specs-list li {
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            color: var(--text-muted);
+            font-size: 14px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .specs-list li span {
+            color: var(--text-main);
+        }
+
+        /* Modal / Profile Drawer */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            width: 100%;
+            max-width: 440px;
+            padding: 32px;
+            position: relative;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        .google-btn-wrapper {
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .demo-auth-btn {
+            width: 100%;
+            margin-top: 12px;
+            padding: 12px;
+            background: #222;
+            color: #fff;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .profile-header {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .profile-header img {
+            width: 72px;
+            height: 72px;
+            border-radius: 50%;
+            margin-bottom: 12px;
+            border: 2px solid var(--border-color);
+        }
+
+        .order-history {
+            margin-top: 20px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .order-item {
+            background: #111;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            font-size: 13px;
+            border: 1px solid #222;
+        }
+
+        footer {
+            border-top: 1px solid var(--border-color);
+            text-align: center;
+            padding: 24px;
+            color: var(--text-muted);
+            font-size: 14px;
+            margin-top: auto;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <a href="#" class="logo">
+            <div class="logo-icon">Z</div>
+            <span>ZENITH PC</span>
+        </a>
+        <div class="user-nav" id="navAuthContainer">
+            <button class="btn btn-outline" onclick="openAuthModal()">Войти</button>
+        </div>
+    </header>
+
+    <div class="container">
+        <section class="hero">
+            <h1>БЕСКОМПРОМИССНАЯ МОЩНОСТЬ</h1>
+            <p>Премиальные игровые и рабочие станции Zenith PC с индивидуальной сборкой и гарантией.</p>
+        </section>
+
+        <section class="grid">
+            <div class="card">
+                <div>
+                    <h3 class="card-title">Zenith Core</h3>
+                    <div class="card-price">85,000 ₽</div>
+                    <ul class="specs-list">
+                        <li>Процессор: <span>Intel Core i5-13400F</span></li>
+                        <li>Видеокарта: <span>NVIDIA RTX 4060 8GB</span></li>
+                        <li>ОЗУ: <span>16GB DDR4 3200MHz</span></li>
+                        <li>Накопитель: <span>1TB M.2 NVMe</span></li>
+                    </ul>
+                </div>
+                <button class="btn" onclick="orderPC('Zenith Core', '85,000 ₽')">Заказать</button>
+            </div>
+
+            <div class="card">
+                <div>
+                    <h3 class="card-title">Zenith Pro</h3>
+                    <div class="card-price">145,000 ₽</div>
+                    <ul class="specs-list">
+                        <li>Процессор: <span>AMD Ryzen 7 7800X3D</span></li>
+                        <li>Видеокарта: <span>NVIDIA RTX 4070 Ti Super</span></li>
+                        <li>ОЗУ: <span>32GB DDR5 6000MHz</span></li>
+                        <li>Накопитель: <span>2TB M.2 NVMe</span></li>
+                    </ul>
+                </div>
+                <button class="btn" onclick="orderPC('Zenith Pro', '145,000 ₽')">Заказать</button>
+            </div>
+
+            <div class="card">
+                <div>
+                    <h3 class="card-title">Zenith Ultra</h3>
+                    <div class="card-price">290,000 ₽</div>
+                    <ul class="specs-list">
+                        <li>Процессор: <span>Intel Core i9-14900K</span></li>
+                        <li>Видеокарта: <span>NVIDIA RTX 4090 24GB</span></li>
+                        <li>ОЗУ: <span>64GB DDR5 6400MHz</span></li>
+                        <li>Накопитель: <span>4TB M.2 NVMe Gen4</span></li>
+                    </ul>
+                </div>
+                <button class="btn" onclick="orderPC('Zenith Ultra', '290,000 ₽')">Заказать</button>
+            </div>
+        </section>
+    </div>
+
+    <!-- Модальное окно авторизации -->
+    <div class="modal" id="authModal">
+        <div class="modal-content">
+            <button class="close-btn" onclick="closeAuthModal()">&times;</button>
+            <h2 style="text-align: center; margin-bottom: 8px;">Вход в Zenith PC</h2>
+            <p style="text-align: center; color: var(--text-muted); font-size: 14px; margin-bottom: 20px;">
+                Авторизуйтесь, чтобы отслеживать заказы и сохранять конфигурации.
+            </p>
+            
+            <div class="google-btn-wrapper">
+                <!-- Контейнер для кнопки Google Sign-In -->
+                <div id="g_id_onload"
+                     data-client_id="YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com"
+                     data-callback="handleCredentialResponse"
+                     data-auto_prompt="false">
+                </div>
+                <div class="g_id_signin"
+                     data-type="standard"
+                     data-size="large"
+                     data-theme="filled_black"
+                     data-text="sign_in_with"
+                     data-shape="rectangular"
+                     data-logo_alignment="left">
+                </div>
+            </div>
+
+            <div style="text-align: center; margin: 16px 0; color: #444; font-size: 12px;">ИЛИ ДЛЯ ТЕСТА</div>
+            <button class="demo-auth-btn" onclick="demoLogin()">Войти как Тестовый Пользователь</button>
+        </div>
+    </div>
+
+    <!-- Модальное окно профиля -->
+    <div class="modal" id="profileModal">
+        <div class="modal-content">
+            <button class="close-btn" onclick="closeProfileModal()">&times;</button>
+            <div class="profile-header">
+                <img id="profileAvatar" src="" alt="Avatar">
+                <h3 id="profileName">Пользователь</h3>
+                <p id="profileEmail" style="color: var(--text-muted); font-size: 13px;"></p>
+            </div>
+            <h4>Мои заказы:</h4>
+            <div class="order-history" id="orderHistoryList">
+                <p style="color: var(--text-muted); font-size: 13px;">У вас пока нет заказов.</p>
+            </div>
+            <button class="btn btn-outline" style="width: 100%; margin-top: 20px;" onclick="logout()">Выйти из аккаунта</button>
+        </div>
+    </div>
+
+    <footer>
+        &copy; 2026 Zenith PC. Все права защищены.
+    </footer>
+
+    <script>
+        // Декодирование JWT токена Google
+        function parseJwt(token) {
+            try {
+                const base64Url = token.split('.')[1];
+                const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+                const jsonPayload = decodeURIComponent(atob(base64).split('').map(c => 
+                    '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
+                ).join(''));
+                return JSON.parse(jsonPayload);
+            } catch (e) {
+                return null;
+            }
+        }
+
+        // Колбэк от Google при успешном входе
+        function handleCredentialResponse(response) {
+            const userData = parseJwt(response.credential);
+            if (userData) {
+                const user = {
+                    name: userData.name,
+                    email: userData.email,
+                    picture: userData.picture
+                };
+                localStorage.setItem('zenith_user', JSON.stringify(user));
+                updateUserUI();
+                closeAuthModal();
+            }
+        }
+
+        // Тестовый вход без Google Client ID
+        function demoLogin() {
+            const demoUser = {
+                name: "Клиент Zenith",
+                email: "client@gmail.com",
+                picture: "https://api.dicebear.com/7.x/bottts/svg?seed=Zenith"
+            };
+            localStorage.setItem('zenith_user', JSON.stringify(demoUser));
+            updateUserUI();
+            closeAuthModal();
+        }
+
+        function updateUserUI() {
+            const savedUser = localStorage.getItem('zenith_user');
+            const container = document.getElementById('navAuthContainer');
+
+            if (savedUser) {
+                const user = JSON.parse(savedUser);
+                container.innerHTML = `
+                    <div class="user-profile-btn" onclick="openProfileModal()">
+                        <img src="${user.picture}" class="user-avatar" alt="Avatar">
+                        <span style="font-size: 14px; font-weight: 600;">${user.name}</span>
+                    </div>
+                `;
+            } else {
+                container.innerHTML = `
+                    <button class="btn btn-outline" onclick="openAuthModal()">Войти</button>
+                `;
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('zenith_user');
+            updateUserUI();
+            closeProfileModal();
+        }
+
+        function orderPC(name, price) {
+            const savedUser = localStorage.getItem('zenith_user');
+            if (!savedUser) {
+                openAuthModal();
+                return;
+            }
+
+            const orders = JSON.parse(localStorage.getItem('zenith_orders') || '[]');
+            orders.unshift({
+                name: name,
+                price: price,
+                date: new Date().toLocaleDateString('ru-RU')
+            });
+            localStorage.setItem('zenith_orders', JSON.stringify(orders));
+
+            alert(`Заказ на ${name} успешно оформлен! :)`);
+            renderOrders();
+        }
+
+        function renderOrders() {
+            const orders = JSON.parse(localStorage.getItem('zenith_orders') || '[]');
+            const list = document.getElementById('orderHistoryList');
+            if (orders.length === 0) {
+                list.innerHTML = `<p style="color: var(--text-muted); font-size: 13px;">У вас пока нет заказов.</p>`;
+                return;
+            }
+            list.innerHTML = orders.map(o => `
+                <div class="order-item">
+                    <div style="font-weight: 600;">${o.name} — ${o.price}</div>
+                    <div style="color: #666; font-size: 11px;">Дата: ${o.date}</div>
+                </div>
+            `).join('');
+        }
+
+        function openAuthModal() { document.getElementById('authModal').classList.add('active'); }
+        function closeAuthModal() { document.getElementById('authModal').classList.remove('active'); }
+        function openProfileModal() { 
+            const user = JSON.parse(localStorage.getItem('zenith_user') || '{}');
+            document.getElementById('profileAvatar').src = user.picture || '';
+            document.getElementById('profileName').innerText = user.name || 'Пользователь';
+            document.getElementById('profileEmail').innerText = user.email || '';
+            renderOrders();
+            document.getElementById('profileModal').classList.add('active'); 
+        }
+        function closeProfileModal() { document.getElementById('profileModal').classList.remove('active'); }
+
+        // Инициализация при загрузке страницы
+        document.addEventListener('DOMContentLoaded', () => {
+            updateUserUI();
+        });
+    </script>
+</body>
+</html>
